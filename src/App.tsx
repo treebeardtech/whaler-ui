@@ -1,5 +1,6 @@
+import axios from 'axios'
 import * as d3 from 'd3'
-import React from 'react'
+import React, { useEffect } from 'react'
 import Canvas from './components/Canvas'
 import { GlobalStyle } from './styles/GlobalStyle'
 
@@ -21,41 +22,36 @@ import { GlobalStyle } from './styles/GlobalStyle'
 // ]
 
 // https://github.com/diego3g/electron-typescript-react/issues
+
+const DATA_FILE = 'du.txt'
 export const App = () => {
   const [data, setData] = React.useState<any>(null)
+  const [err, setErr] = React.useState<string | null>(null)
 
-  function onChangeFile(event: any) {
-    const file = event.target.files[0]
-    console.log(file)
-
-    const reader = new FileReader()
-
-    reader.readAsText(file)
-
-    reader.onload = () => {
-      const d = d3.tsvParse(`value\tid\n${reader.result}`)
+  useEffect(() => {
+    const load = async () => {
+      const resp = await axios.get(DATA_FILE)
+      if (resp.status !== 200) {
+        setErr(`Failed to get ${DATA_FILE} with status ${resp.status}`)
+        return
+      }
+      const text = resp.data
+      const d = d3.tsvParse(`value\tid\n${text}`)
+      if (!d?.length || d.length < 2) {
+        setErr(`failed to find tsv formatted data in ${DATA_FILE}`)
+      }
       setData(d)
     }
+    load()
+  }, [])
 
-    reader.onerror = () => {
-      console.log(reader.error)
-    }
+  if (err) {
+    return <>{err}</>
   }
-
   return (
     <>
       <GlobalStyle />
       {data && <Canvas data={data} />}
-      <div style={{ width: 800, margin: 'auto' }}>
-        <p style={{ fontFamily: 'monaco' }}>
-          du -k -a some-dir {'>'} disk.tsv
-          <br />
-          docker run -it --rm --workdir / --entrypoint /du psutil-example -a -c{' '}
-          {'>'} du.tsv
-        </p>
-
-        <input id="myInput" type="file" onChange={onChangeFile} />
-      </div>
     </>
   )
 }
