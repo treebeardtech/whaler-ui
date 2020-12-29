@@ -22,10 +22,9 @@ import Canvas from './Canvas'
 
 // https://github.com/diego3g/electron-typescript-react/issues
 
-const DATA_FILE 
-= 'du.txt'
+const DATA_FILE = 'du.txt'
 
-export const App = () => { 
+export const App = () => {
   const [data, setData] = React.useState<any>(null)
   const [err, setErr] = React.useState<string | null>(null)
 
@@ -49,9 +48,5 @@ export const App = () => {
   if (err) {
     return <>{err}</>
   }
-  return (
-    <>
-      {data && <Canvas data={data} />}
-    </>
-  )
+  return <>{data && <Canvas data={data} />}</>
 }
