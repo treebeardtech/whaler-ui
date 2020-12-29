@@ -1,26 +1,57 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import axios from 'axios'
+import * as d3 from 'd3'
+import React, { useEffect } from 'react'
+import Canvas from './Canvas'
 
-function App() {
+// const defdata = [
+//   {
+//     id: '.venv/share/jupyter',
+//     value: 7964,
+//   },
+//   {
+//     id: '.venv/asdf',
+//     value: 1111,
+//   },
+//   {
+//     id: '.venv/share',
+//   },
+//   {
+//     id: '.venv',
+//   },
+// ]
+
+// https://github.com/diego3g/electron-typescript-react/issues
+
+const DATA_FILE 
+= 'du.txt'
+
+export const App = () => { 
+  const [data, setData] = React.useState<any>(null)
+  const [err, setErr] = React.useState<string | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      const resp = await axios.get(DATA_FILE)
+      if (resp.status !== 200) {
+        setErr(`Failed to get ${DATA_FILE} with status ${resp.status}`)
+        return
+      }
+      const text = resp.data
+      const d = d3.tsvParse(`value\tid\n${text}`)
+      if (!d?.length || d.length < 2) {
+        setErr(`failed to find tsv formatted data in ${DATA_FILE}`)
+      }
+      setData(d)
+    }
+    load()
+  }, [])
+
+  if (err) {
+    return <>{err}</>
+  }
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <>
+      {data && <Canvas data={data} />}
+    </>
+  )
 }
-
-export default App;
