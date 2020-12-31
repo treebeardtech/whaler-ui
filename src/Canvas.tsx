@@ -3,12 +3,11 @@
 import React, { useEffect, useRef } from 'react'
 
 import { HierarchyRectangularNode } from 'd3'
-import { draw, drawNode, FsNode } from './lib'
-
-let lookup: HierarchyRectangularNode<FsNode>[][] | null = null
+import { drawNode, drawTree, FsNode } from './lib'
 
 interface CP {
   data: HierarchyRectangularNode<FsNode>
+  pixelLookup: HierarchyRectangularNode<FsNode>[][]
   height: number
   width: number
   hovered: HierarchyRectangularNode<FsNode> | null
@@ -27,6 +26,7 @@ function usePrevious(value: any) {
 
 const Canvas: React.FC<CP> = ({
   data,
+  pixelLookup,
   hovered,
   setHovered,
   selected,
@@ -47,11 +47,11 @@ const Canvas: React.FC<CP> = ({
     }
 
     if (prevSelected) {
-      drawNode(prevSelected, context, undefined, false)
+      drawTree(prevSelected, context)
     }
 
     if (selected) {
-      drawNode(selected, context, 'white', false)
+      drawNode(selected, context, 'yellow', 2.0, false)
     }
   }, [prevSelected, selected, context])
 
@@ -65,14 +65,11 @@ const Canvas: React.FC<CP> = ({
     }
 
     if (context && data) {
-      lookup = draw(context, data, height, width)
+      drawTree(data, context)
     }
   }, [context, data, height, width])
 
   const getNode = (event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-    if (!lookup) {
-      return
-    }
     // https://stackoverflow.com/questions/17130395/real-mouse-position-in-canvas
     const canvas = canvasRef.current!
     const rect = canvas.getBoundingClientRect()
@@ -83,7 +80,7 @@ const Canvas: React.FC<CP> = ({
       y: Math.round((event.clientY - rect.top) * scaleY),
     }
 
-    const row = lookup[loc.y]
+    const row = pixelLookup[loc.y]
     if (!row) {
       return
     }

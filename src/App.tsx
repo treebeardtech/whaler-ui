@@ -3,7 +3,7 @@ import * as d3 from 'd3'
 import { HierarchyRectangularNode } from 'd3'
 import React, { useEffect } from 'react'
 import Canvas from './Canvas'
-import { displayNode, FsNode, getHierarchy } from './lib'
+import { displayNode, FsNode, getHierarchy, getPixelLookup } from './lib'
 import NodeViewer from './NodeViewer'
 import AutoSizer from 'react-virtualized-auto-sizer'
 const DATA_FILE = 'du.txt'
@@ -16,6 +16,9 @@ export const App = () => {
     data,
     setData,
   ] = React.useState<HierarchyRectangularNode<FsNode> | null>(null)
+  const [pixelLookup, setPixelLookup] = React.useState<
+    HierarchyRectangularNode<FsNode>[][] | null
+  >(null)
   const [err, setErr] = React.useState<string | null>(null)
   const [
     hovered,
@@ -47,6 +50,7 @@ export const App = () => {
         treemapWidth,
         treemapHeight
       )
+      setPixelLookup(getPixelLookup(df))
       setData(df)
     }
     load()
@@ -56,7 +60,7 @@ export const App = () => {
     return <>{err}</>
   }
 
-  if (!data) {
+  if (!(data && pixelLookup)) {
     return <>Loading</>
   }
 
@@ -70,13 +74,14 @@ export const App = () => {
             <div style={{ display: 'flex' }}>
               <NodeViewer
                 data={data}
-                height={height - 50}
+                height={treemapHeight}
                 width={width - 50}
                 selected={selected}
                 setSelected={setSelected}
               />
               <Canvas
                 data={data}
+                pixelLookup={pixelLookup}
                 selected={selected}
                 setSelected={setSelected}
                 hovered={null}
@@ -84,6 +89,9 @@ export const App = () => {
                 height={treemapHeight}
                 width={treemapWidth}
               />
+            </div>
+            <div style={{ fontWeight: 'bold' }}>
+              {selected && displayNode(selected)}
             </div>
             <div>{hovered && displayNode(hovered)}</div>
           </div>

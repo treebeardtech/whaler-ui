@@ -9,6 +9,10 @@ yarn install
 ```
 
 ```
+du -k -a . > public/du.txt # generate test data
+```
+
+```
 yarn start
 ```
 

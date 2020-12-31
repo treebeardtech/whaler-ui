@@ -58,41 +58,48 @@ const getColor = (filename: string) => {
 export const drawNode = (
   node: HierarchyRectangularNode<FsNode>,
   context: CanvasRenderingContext2D,
-  strokeStyle: string = 'rgba(0,0,0,1)',
+  strokeStyle: string = 'rgba(0,0,0,0.2)',
+  lineWidth: number = 0.3,
   fill: boolean = true
 ) => {
   context.save() // For clipping the text
   context.beginPath()
-  context.rect(node.x0, node.y0, node.x1 - node.x0, node.y1 - node.y0)
+  context.rect(
+    node.x0 + lineWidth,
+    node.y0 + lineWidth,
+    node.x1 - node.x0 - 2 * lineWidth,
+    node.y1 - node.y0 - 2 * lineWidth
+  )
 
   if (fill) {
     context.fillStyle = getColor(node.data.id)
     context.fill()
   }
-  context.lineWidth = 0.3
+  context.lineWidth = lineWidth
   context.strokeStyle = strokeStyle
   context.stroke()
   context.restore()
 }
 
-export const draw: (
-  context: CanvasRenderingContext2D,
-  data: HierarchyRectangularNode<FsNode>,
-  height: number,
-  width: number
-) => HierarchyRectangularNode<FsNode>[][] | null = (
-  context,
-  data,
-  height,
-  width
+export const drawTree = (
+  root: HierarchyRectangularNode<FsNode>,
+  context: CanvasRenderingContext2D
 ) => {
+  const leaves = root.leaves()
+
+  leaves.forEach((leaf) => {
+    drawNode(leaf, context)
+  })
+}
+
+export const getPixelLookup = (data: HierarchyRectangularNode<FsNode>) => {
   const leaves = data.leaves()
 
   const lookup: HierarchyRectangularNode<FsNode>[][] = [
-    ...new Array(height),
-  ].map((row) => new Array<HierarchyRectangularNode<FsNode>>(width))
+    ...new Array(data.x1 - data.x0),
+  ].map((row) => new Array<HierarchyRectangularNode<FsNode>>(data.y1 - data.y0))
+
   leaves.forEach((leaf) => {
-    drawNode(leaf, context)
     for (let y = leaf.y0; y < leaf.y1; y++) {
       for (let x = leaf.x0; x < leaf.x1; x++) {
         lookup[y][x] = leaf

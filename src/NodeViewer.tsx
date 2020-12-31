@@ -45,9 +45,17 @@ const NodeViewer = ({
 
   useEffect(() => {
     if (r.current && selected) {
+      r.current?.recomputeTree({
+        [data.data.id]: {
+          open: true,
+          subtreeCallback: (node, ownerNode) => {
+            node.isOpen = selected.data.id.startsWith(node.data.id)
+          },
+        },
+      })
       r.current.scrollToItem(selected.data.id)
     }
-  }, [selected])
+  }, [selected, data])
 
   const getNodeData = (
     node: HierarchyRectangularNode<FsNode>
@@ -55,7 +63,7 @@ const NodeViewer = ({
     data: {
       id: node.data.id,
       isLeaf: node.children === undefined,
-      isOpenByDefault: true,
+      isOpenByDefault: node.parent === null,
       name: displayNode(node, true),
       nestingLevel: node.depth,
       isSelected: !!selected && selected.data.id === node.data.id,
@@ -79,13 +87,25 @@ const NodeViewer = ({
         display: 'flex',
         marginLeft: nestingLevel * 30 + (isLeaf ? 48 : 0),
         fontWeight: isSelected ? 'bold' : 'normal',
+        backgroundColor: isSelected ? 'yellow' : 'white',
       }}
     >
       {!isLeaf && (
         <div>
           <button
             type="button"
-            onClick={() => setOpen(!isOpen)}
+            onClick={() => {
+              r.current?.recomputeTree({
+                [node.data.id]: {
+                  open: !isOpen,
+                  subtreeCallback: (node, ownerNode) => {
+                    if (node !== ownerNode) {
+                      node.isOpen = false
+                    }
+                  },
+                },
+              })
+            }}
             style={defaultButtonStyle}
           >
             {isOpen ? 'V' : '>'}
