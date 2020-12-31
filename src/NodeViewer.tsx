@@ -49,7 +49,9 @@ const NodeViewer = ({
         [data.data.id]: {
           open: true,
           subtreeCallback: (node, ownerNode) => {
-            node.isOpen = selected.data.id.startsWith(node.data.id)
+            node.isOpen =
+              selected.data.id.startsWith(node.data.id) &&
+              selected.data.id !== node.data.id
           },
         },
       })
