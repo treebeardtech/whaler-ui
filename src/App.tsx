@@ -1,32 +1,34 @@
 import axios from 'axios'
 import * as d3 from 'd3'
+import { HierarchyRectangularNode } from 'd3'
 import React, { useEffect } from 'react'
 import Canvas from './Canvas'
-
-// const defdata = [
-//   {
-//     id: '.venv/share/jupyter',
-//     value: 7964,
-//   },
-//   {
-//     id: '.venv/asdf',
-//     value: 1111,
-//   },
-//   {
-//     id: '.venv/share',
-//   },
-//   {
-//     id: '.venv',
-//   },
-// ]
-
-// https://github.com/diego3g/electron-typescript-react/issues
-
+import { displayNode, FsNode, getHierarchy } from './lib'
+import NodeViewer from './NodeViewer'
+import AutoSizer from 'react-virtualized-auto-sizer'
 const DATA_FILE = 'du.txt'
 
+const treemapHeight = 700
+const treemapWidth = 700
+
 export const App = () => {
-  const [data, setData] = React.useState<any>(null)
+  const [
+    data,
+    setData,
+  ] = React.useState<HierarchyRectangularNode<FsNode> | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
+  const [
+    hovered,
+    setHovered,
+  ] = React.useState<HierarchyRectangularNode<FsNode> | null>(null)
+  const [
+    selected,
+    setSelected,
+  ] = React.useState<HierarchyRectangularNode<FsNode> | null>(null)
+
+  useEffect(() => {
+    console.log(selected)
+  }, [selected])
 
   useEffect(() => {
     const load = async () => {
@@ -40,7 +42,12 @@ export const App = () => {
       if (!d?.length || d.length < 2) {
         setErr(`failed to find tsv formatted data in ${DATA_FILE}`)
       }
-      setData(d)
+      const df = getHierarchy(
+        (d as unknown) as FsNode[],
+        treemapWidth,
+        treemapHeight
+      )
+      setData(df)
     }
     load()
   }, [])
@@ -48,5 +55,40 @@ export const App = () => {
   if (err) {
     return <>{err}</>
   }
-  return <>{data && <Canvas data={data} />}</>
+
+  if (!data) {
+    return <>Loading</>
+  }
+
+  return (
+    <AutoSizer
+      style={{ height: 'calc(100vh - 20px)', width: 'calc(100vw - 20px)' }}
+    >
+      {({ height, width }) => {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex' }}>
+              <NodeViewer
+                data={data}
+                height={height - 50}
+                width={width - 50}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Canvas
+                data={data}
+                selected={selected}
+                setSelected={setSelected}
+                hovered={null}
+                setHovered={setHovered}
+                height={treemapHeight}
+                width={treemapWidth}
+              />
+            </div>
+            <div>{hovered && displayNode(hovered)}</div>
+          </div>
+        )
+      }}
+    </AutoSizer>
+  )
 }
